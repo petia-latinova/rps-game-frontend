@@ -1,48 +1,27 @@
-import { useEffect } from 'react';
-import { BoardProvider, useBoard } from './context/BoardContext';
-import { socket } from './socket';
+import { useState } from 'react';
+import { BoardProvider } from './context/BoardContext';
+import Lobby from './components/Lobby';
+import Controls from './components/Controls';
+import Board from './components/Board';
 
-const Board = () => {
-  const { board } = useBoard();
+export default function App() {
+  const [joined, setJoined] = useState<{ roomId: string; nickname: string } | null>(null);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 50px)', gap: 5 }}>
-      {board.flat().map((cell, index) => (
-        <div
-          key={index}
-          style={{
-            width: 50,
-            height: 50,
-            border: '1px solid black',
-            backgroundColor: cell.revealed ? 'lightgray' : 'white',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          {cell.revealed ? cell.type : ''}
-        </div>
-      ))}
-    </div>
+    <BoardProvider>
+      <div style={{ padding:16, fontFamily:'system-ui, Arial' }}>
+        <h1>ICQ RPS Board</h1>
+        {!joined ? (
+          <Lobby onJoined={(roomId, nickname) => setJoined({ roomId, nickname })} />
+        ) : (
+          <>
+            <div>Room: <strong>{joined.roomId}</strong> | You: <strong>{joined.nickname}</strong></div>
+            <Controls />
+            <p>Click a piece square (your side), then click a target square (one step). Same-type battle triggers a popup.</p>
+            <Board />
+          </>
+        )}
+      </div>
+    </BoardProvider>
   );
-};
-
-const AppInner = () => {
-  useEffect(() => {
-    socket.on('pong', (msg) => console.log('Received from server:', msg));
-    socket.emit('ping', 'Hello server');
-    return () => {
-      socket.off('pong');
-    };
-  }, []);
-
-  return <Board />;
-};
-
-const App = () => (
-  <BoardProvider>
-    <AppInner />
-  </BoardProvider>
-);
-
-export default App;
+}

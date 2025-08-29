@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 export type Cell = {
   id: string;
-  type: 'rock' | 'paper' | 'scissors' | 'flag' | null;
+  type: 'rock' | 'paper' | 'scissors' | 'flag' | 'hole' | null;
   revealed: boolean;
 };
 
