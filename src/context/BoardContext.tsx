@@ -1,18 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
-
-export type Cell = {
-  id: string;
-  type: 'rock' | 'paper' | 'scissors' | 'flag' | 'hole' | null;
-  revealed: boolean;
-};
-
-export type Board = Cell[][];
-
-type BoardContextType = {
-  board: Board;
-  setBoard: React.Dispatch<React.SetStateAction<Board>>;
-};
+import type { Board, BoardContextType } from '../types.ts';
 
 const BoardContext = createContext<BoardContextType | undefined>(undefined);
 
