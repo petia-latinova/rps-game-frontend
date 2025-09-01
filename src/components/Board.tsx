@@ -9,8 +9,7 @@ import type { ServerState, ServerCell } from '../types';
 type Sel = { r:number; c:number } | null;
 
 export default function Board() {
-  const { board, setBoard } = useBoard();
-  const [serverState, setServerState] = useState<ServerState | null>(null);
+  const { board, setBoard, serverState, setServerState } = useBoard();
   const [selected, setSelected] = useState<Sel>(null);
   const [showRps, setShowRps] = useState(false);
   const [myPiecesPlaced, setMyPiecesPlaced] = useState(0);
@@ -31,8 +30,13 @@ export default function Board() {
         // If the cell has a piece, look it up in the pieces map
         if (cell.pieceId && s.pieces[cell.pieceId]) {
           const piece = s.pieces[cell.pieceId];
-          revealed = piece.revealedTo.includes(s.you); // 's.you' = your playerId
-          type = revealed ? piece.type : null;
+          // Support both Array and Set formats for revealedTo
+          const revealedTo = piece.revealedTo;
+          console.log(s.you, revealedTo)
+          revealed = Array.isArray(revealedTo)
+            ? revealedTo.includes(s.you)
+            : revealedTo.has(s.you);
+          type = revealed ? piece.type : 'person';
           owner = piece.owner;
         }
 
@@ -45,6 +49,7 @@ export default function Board() {
       })
     );
       // Clone rows to ensure React re-renders
+      console.log(mapped)
       setBoard(mapped.map(row => [...row]));
 
       // Track how many pieces the player has placed //TODO
@@ -61,28 +66,23 @@ export default function Board() {
   console.log('Board rows:', board.length, 'Cols:', board[0]?.length);
 
   const turnInfo = useMemo(() => {
-    if (!serverState) return '—';
+    if (!serverState) {
+      return '—';
+    }
     return serverState.turn ? `Turn: ${serverState.turn.slice(0,5)}…` : 'Waiting for ready';
   }, [serverState]);
-
-  function oponentColor(color: string | undefined) {
-    switch (color) {
-      case 'red': return 'blue';
-      case 'blue': return 'red';
-      default: return '';
-    }
-  }
 
   function getColor(color: string | undefined) {
     switch(color) {
       case 'red': return '🔴';
       case 'blue': return '🔵';
-      default: return '';
+      default: return '🔵';
     }
   }
 
   function symbol(cell: Cell) {
-    const color = serverState?.you === cell.owner ? serverState?.color : oponentColor(serverState?.color);
+    const color = serverState?.playerColors[cell.owner];
+    
     switch (cell.type) {
       case 'rock': return `${getColor(color)}🪨`;
       case 'paper': return `${getColor(color)}📄`;
@@ -108,32 +108,40 @@ export default function Board() {
 
     if (!placedFlag || !placedHole) {
       // Only allow empty cells
-      if (cell.revealed || cell.type) return;
+      if (cell.type && cell.type !== 'person') {
+        return;
+      }
 
       // Determine which piece to place visually
       const pieceType: 'flag' | 'hole' = !placedFlag ? 'flag' : 'hole';
 
-      // Temporarily show the piece locally (frontend only)
+      // Show piece locally
       setBoard((prev) => {
         const newBoard = prev.map((row, rIdx) =>
-          row.map((cCell, cIdx) => {
-            if (rIdx === r && cIdx === c) {
-              return { ...cCell, type: pieceType, revealed: true };
-            }
-            return cCell;
-          })
+          row.map((cCell, cIdx) =>
+            rIdx === r && cIdx === c
+              ? { ...cCell, type: pieceType, revealed: true }
+              : cCell
+          )
         );
         return newBoard;
       });
 
       // Notify backend of placement
       socket.emit('place_piece', { r, c, type: pieceType });
+      
+      if(pieceType === 'hole') {
+        socket.emit('randomize');
+      }
+      
       return;
     }
 
     // === Movement phase ===
     if (!selected) {
-      if (!cell.type || !cell.revealed) return; // can only select your own visible pieces
+      if (!cell.type || !cell.revealed) { // can only select your own visible pieces
+        return;
+      }
       setSelected({ r, c });
     } else {
       if (selected.r === r && selected.c === c) {
@@ -191,7 +199,7 @@ export default function Board() {
                   }}
                   title={`${r},${c}`}
                 >
-                  {cell.revealed ? symbol(cell) : cell.type ? '?' : ''}
+                  {symbol(cell)}
                 </div>
               );
             })}

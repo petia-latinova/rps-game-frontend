@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { Board, BoardContextType } from '../types.ts';
+import type { Board, BoardContextType, ServerState } from '../types.ts';
 
 const BoardContext = createContext<BoardContextType | undefined>(undefined);
 
@@ -9,8 +9,10 @@ export const BoardProvider = ({ children }: { children: ReactNode }) => {
     Array(6).fill(Array(7).fill({ id: '', type: null, revealed: false }))
   );
 
+  const [serverState, setServerState] = useState<ServerState | null>(null);
+
   return (
-    <BoardContext.Provider value={{ board, setBoard }}>
+    <BoardContext.Provider value={{ board, setBoard, serverState, setServerState }}>
       {children}
     </BoardContext.Provider>
   );

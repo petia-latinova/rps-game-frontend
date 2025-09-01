@@ -1,9 +1,12 @@
+// === Shared types ===
 export type RpsChoice = 'rock' | 'paper' | 'scissors';
+
+export type PieceType = 'rock' | 'paper' | 'scissors' | 'flag' | 'hole' | 'person';
 
 export interface Piece {
   id: string;
   owner: string; // playerId / socket.id
-  type: 'rock' | 'paper' | 'scissors' | 'flag' | 'hole';
+  type: PieceType;
   revealedTo: string[]; // array of playerIds who can see it
 }
 
@@ -26,13 +29,14 @@ export interface ServerState {
   myPiecesPlaced?: number;
   myFlagPlaced: boolean;
   myHolePlaced: boolean;
+  playerColors?: Record<string, 'red' | 'blue'>;
 }
 
 
-// BoardContext
+// === Frontend context types ===
 export type Cell = {
   id: string;
-  type: 'rock' | 'paper' | 'scissors' | 'flag' | 'hole' | 'person' | null;
+  type: PieceType | null;
   revealed: boolean;
   owner?: string;
 };
@@ -42,5 +46,6 @@ export type Board = Cell[][];
 export type BoardContextType = {
   board: Board;
   setBoard: React.Dispatch<React.SetStateAction<Board>>;
+  serverState: ServerState | null;
+  setServerState: React.Dispatch<React.SetStateAction<ServerState | null>>;
 };
-

@@ -10,7 +10,7 @@ export default function App() {
   return (
     <BoardProvider>
       <div style={{ padding:16, fontFamily:'system-ui, Arial' }}>
-        <h1>ICQ RPS Board</h1>
+        <h1>ICQ RPS Game</h1>
         {!joined ? (
           <Lobby onJoined={(roomId, nickname) => setJoined({ roomId, nickname })} />
         ) : (
